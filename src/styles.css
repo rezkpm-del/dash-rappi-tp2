@@ -161,6 +161,23 @@
     print-color-adjust: exact !important;
   }
 
+  /* Free up height/overflow constraints so content can flow across pages */
+  html,
+  body,
+  #root,
+  main,
+  .min-h-screen,
+  .h-screen,
+  .overflow-y-auto,
+  .overflow-hidden,
+  .overflow-auto {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
   /* Hide everything by default */
   body * {
     visibility: hidden !important;

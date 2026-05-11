@@ -149,7 +149,7 @@ function ChartBlock({ chart }) {
   const isLine = type === "line";
 
   return (
-    <div className="chart-block my-6 rounded-lg border border-neutral-800 bg-neutral-950/60 overflow-hidden">
+    <div className="chart-block my-6 rounded-lg border border-neutral-800 bg-neutral-950/60 overflow-visible">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800 bg-neutral-900/40">
         <div className="flex items-center gap-2">
           <Activity className="h-3.5 w-3.5 text-violet-400" strokeWidth={2.5} />

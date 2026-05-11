@@ -168,8 +168,8 @@ function ChartBlock({ chart }) {
         </h3>
       </div>
 
-      <div className="px-3 pb-4">
-        <ResponsiveContainer width="100%" height={280}>
+      <div className="px-3 pb-4 chart-print-wrap" style={{ width: "100%", height: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
           {isLine ? (
             <LineChart
               data={data}
@@ -531,12 +531,70 @@ export default function InsightsDashboard() {
 
   function exportCSV() {
     const charts = segments.filter((s) => s.type === "chart");
-    if (charts.length === 0) return;
+    const mdSegments = segments.filter((s) => s.type === "markdown");
+
+    // Extract markdown tables — sequences of lines containing `|`,
+    // skipping the separator row (---|---).
+    const tables = [];
+    mdSegments.forEach((seg) => {
+      const text = seg.content || "";
+      const allLines = text.split(/\r?\n/);
+      let buffer = [];
+      let titleHint = "";
+      let lastHeading = "";
+
+      const flush = () => {
+        if (buffer.length < 2) {
+          buffer = [];
+          return;
+        }
+        const rows = buffer
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0)
+          // strip leading/trailing pipes then split
+          .map((l) => l.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim()))
+          // drop separator rows like |---|---|
+          .filter((cols) => !cols.every((c) => /^:?-{2,}:?$/.test(c) || c === ""));
+
+        if (rows.length >= 2) {
+          tables.push({ title: titleHint || lastHeading || "", rows });
+        }
+        buffer = [];
+        titleHint = "";
+      };
+
+      for (const line of allLines) {
+        const trimmed = line.trim();
+        const headingMatch = trimmed.match(/^#{1,6}\s+(.*)$/);
+        if (headingMatch) {
+          flush();
+          lastHeading = headingMatch[1].trim();
+          continue;
+        }
+        if (trimmed.includes("|")) {
+          buffer.push(line);
+        } else {
+          flush();
+        }
+      }
+      flush();
+    });
+
+    if (charts.length === 0 && tables.length === 0) return;
 
     const lines = [];
+
+    tables.forEach((t, idx) => {
+      if (idx > 0) lines.push("");
+      lines.push(`# ${t.title || "Tabla " + (idx + 1)}`);
+      t.rows.forEach((cols) => {
+        lines.push(cols.map(csvEscape).join(","));
+      });
+    });
+
     charts.forEach((seg, idx) => {
       const { title, type, data } = seg.chart;
-      if (idx > 0) lines.push(""); // blank line between charts
+      if (lines.length > 0) lines.push("");
       lines.push(`# ${title || "Chart " + (idx + 1)} (${type})`);
       lines.push("name,value");
       data.forEach((row) => {
@@ -560,6 +618,10 @@ export default function InsightsDashboard() {
   const hasReport = segments.length > 0;
   const chartCount = segments.filter((s) => s.type === "chart").length;
   const hasCharts = chartCount > 0;
+  const hasMarkdownTables = segments.some(
+    (s) => s.type === "markdown" && /^\s*\|.*\|/m.test(s.content || "")
+  );
+  const hasExportable = hasCharts || hasMarkdownTables;
 
   const samplePrompts = [
     "Analiza las ventas del último trimestre por región",
@@ -705,11 +767,11 @@ export default function InsightsDashboard() {
                   </button>
                   <button
                     onClick={exportCSV}
-                    disabled={!hasCharts}
+                    disabled={!hasExportable}
                     title={
-                      hasCharts
-                        ? `Exportar ${chartCount} dataset(s)`
-                        : "No hay datos de gráficos para exportar"
+                      hasExportable
+                        ? `Exportar tablas y datasets`
+                        : "No hay datos para exportar"
                     }
                     className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md text-[12px] font-medium bg-violet-600 hover:bg-violet-500 text-white border border-violet-500/60 disabled:bg-neutral-900 disabled:text-neutral-600 disabled:border-neutral-800 disabled:cursor-not-allowed transition-colors"
                   >

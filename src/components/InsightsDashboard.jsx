@@ -466,18 +466,7 @@ export default function InsightsDashboard() {
     el.style.height = Math.min(el.scrollHeight, 200) + "px";
   }, [question]);
 
-  // Lazy-load html2pdf only when needed
-  async function loadHtml2Pdf() {
-    if (window.html2pdf) return window.html2pdf;
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src =
-        "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      script.onload = () => resolve(window.html2pdf);
-      script.onerror = () => reject(new Error("Failed to load html2pdf"));
-      document.head.appendChild(script);
-    });
-  }
+  // PDF export uses native window.print() — see @media print in styles.css
 
   async function handleSubmit() {
     const q = question.trim();
@@ -526,110 +515,16 @@ export default function InsightsDashboard() {
     }
   }
 
-  async function exportPDF() {
+  function exportPDF() {
     if (!reportRef.current || exporting) return;
     setExporting(true);
-
-    // Clone the report node off-screen and force every color to a
-    // html2canvas-safe HEX value. html2canvas cannot parse oklch(),
-    // which is what our theme tokens compile to.
-    const BG = "#0a0a0a";
-    const FG = "#ffffff";
-    const BORDER = "#262626";
-    const MUTED = "#a3a3a3";
-    const ACCENT = "#3b82f6";
-
-    const original = reportRef.current;
-    const clone = original.cloneNode(true);
-
-    const wrapper = document.createElement("div");
-    wrapper.style.position = "fixed";
-    wrapper.style.left = "-10000px";
-    wrapper.style.top = "0";
-    wrapper.style.width = original.offsetWidth + "px";
-    wrapper.style.background = BG;
-    wrapper.style.color = FG;
-    wrapper.style.padding = "16px";
-    wrapper.appendChild(clone);
-    document.body.appendChild(wrapper);
-
-    const isOklch = (v) => typeof v === "string" && v.includes("oklch");
-    const isTransparent = (v) =>
-      !v ||
-      v === "transparent" ||
-      v === "rgba(0, 0, 0, 0)" ||
-      v === "none";
-
-    const sanitize = (root) => {
-      const all = [root, ...root.querySelectorAll("*")];
-      all.forEach((el) => {
-        if (!(el instanceof HTMLElement) && !(el instanceof SVGElement)) return;
-        const cs = window.getComputedStyle(el);
-
-        // Background
-        const bg = cs.backgroundColor;
-        if (isOklch(bg) || isTransparent(bg)) {
-          // keep transparent for nested elements unless it's oklch
-          if (isOklch(bg)) el.style.backgroundColor = BG;
-        } else {
-          el.style.backgroundColor = bg;
-        }
-
-        // Background image (gradients can also use oklch)
-        const bgImg = cs.backgroundImage;
-        if (isOklch(bgImg)) el.style.backgroundImage = "none";
-
-        // Text color
-        const color = cs.color;
-        if (isOklch(color)) {
-          el.style.color = FG;
-        } else if (color) {
-          el.style.color = color;
-        }
-
-        // Borders
-        ["Top", "Right", "Bottom", "Left"].forEach((side) => {
-          const c = cs[`border${side}Color`];
-          if (isOklch(c)) {
-            el.style[`border${side}Color`] = BORDER;
-          }
-        });
-        const outline = cs.outlineColor;
-        if (isOklch(outline)) el.style.outlineColor = BORDER;
-
-        // Fill / stroke for SVG (charts)
-        const fill = cs.fill;
-        if (isOklch(fill)) el.style.fill = ACCENT;
-        const stroke = cs.stroke;
-        if (isOklch(stroke)) el.style.stroke = MUTED;
-
-        // Box-shadow
-        if (isOklch(cs.boxShadow)) el.style.boxShadow = "none";
-      });
-    };
-
     try {
-      sanitize(clone);
-
-      const html2pdf = await loadHtml2Pdf();
-      const opt = {
-        margin: 12,
-        filename: `insights-report-${Date.now()}.pdf`,
-        image: { type: "jpeg", quality: 0.97 },
-        html2canvas: {
-          scale: 2,
-          backgroundColor: BG,
-          useCORS: true,
-        },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-      };
-      await html2pdf().set(opt).from(clone).save();
-    } catch (err) {
-      setError("Could not export PDF: " + err.message);
+      // Native browser print — user picks "Save as PDF" in the dialog.
+      // All styling is handled by @media print rules in styles.css.
+      window.print();
     } finally {
-      if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
-      setExporting(false);
+      // Reset immediately; print dialog is modal and synchronous-ish.
+      setTimeout(() => setExporting(false), 300);
     }
   }
 
@@ -831,7 +726,7 @@ export default function InsightsDashboard() {
               {/* Report body — this is what gets exported to PDF */}
               <div
                 ref={reportRef}
-                className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-6 md:p-8"
+                className="print-report rounded-xl border border-neutral-800 bg-neutral-900/30 p-6 md:p-8"
                 style={{ background: "#0a0a0a" }}
               >
                 <div className="mb-6 pb-4 border-b border-neutral-800">

@@ -767,11 +767,11 @@ export default function InsightsDashboard() {
                   </button>
                   <button
                     onClick={exportCSV}
-                    disabled={!hasCharts}
+                    disabled={!hasExportable}
                     title={
-                      hasCharts
-                        ? `Exportar ${chartCount} dataset(s)`
-                        : "No hay datos de gráficos para exportar"
+                      hasExportable
+                        ? `Exportar tablas y datasets`
+                        : "No hay datos para exportar"
                     }
                     className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md text-[12px] font-medium bg-violet-600 hover:bg-violet-500 text-white border border-violet-500/60 disabled:bg-neutral-900 disabled:text-neutral-600 disabled:border-neutral-800 disabled:cursor-not-allowed transition-colors"
                   >

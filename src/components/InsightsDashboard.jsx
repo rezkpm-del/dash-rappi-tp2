@@ -399,6 +399,65 @@ export default function InsightsDashboard() {
   const reportRef = useRef(null);
   const textareaRef = useRef(null);
 
+  // Speech recognition
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const recognitionRef = useRef(null);
+  const baseTextRef = useRef("");
+
+  useEffect(() => {
+    const SR =
+      typeof window !== "undefined" &&
+      (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!SR) {
+      setSpeechSupported(false);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "es-ES";
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = (event) => {
+      let interim = "";
+      let finalText = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += transcript;
+        else interim += transcript;
+      }
+      if (finalText) {
+        baseTextRef.current = (baseTextRef.current + " " + finalText).trim() + " ";
+      }
+      setQuestion((baseTextRef.current + interim).trimStart());
+    };
+    rec.onend = () => setIsListening(false);
+    rec.onerror = (e) => {
+      console.error("SpeechRecognition error", e);
+      setIsListening(false);
+    };
+    recognitionRef.current = rec;
+    return () => {
+      try { rec.stop(); } catch {}
+    };
+  }, []);
+
+  function toggleListening() {
+    const rec = recognitionRef.current;
+    if (!rec) return;
+    if (isListening) {
+      try { rec.stop(); } catch {}
+      setIsListening(false);
+    } else {
+      baseTextRef.current = question ? question.trimEnd() + " " : "";
+      try {
+        rec.start();
+        setIsListening(true);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+
   // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;

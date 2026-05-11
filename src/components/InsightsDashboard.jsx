@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   LineChart,
   Line,
@@ -148,7 +149,7 @@ function ChartBlock({ chart }) {
   const isLine = type === "line";
 
   return (
-    <div className="my-6 rounded-lg border border-neutral-800 bg-neutral-950/60 overflow-hidden">
+    <div className="chart-block my-6 rounded-lg border border-neutral-800 bg-neutral-950/60 overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800 bg-neutral-900/40">
         <div className="flex items-center gap-2">
           <Activity className="h-3.5 w-3.5 text-violet-400" strokeWidth={2.5} />
@@ -746,7 +747,7 @@ export default function InsightsDashboard() {
                     <ChartBlock key={seg.id || i} chart={seg.chart} />
                   ) : (
                     <div key={i} className="prose-invert">
-                      <ReactMarkdown components={mdComponents}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                         {seg.content}
                       </ReactMarkdown>
                     </div>

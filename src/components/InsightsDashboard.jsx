@@ -726,7 +726,7 @@ export default function InsightsDashboard() {
               {/* Report body — this is what gets exported to PDF */}
               <div
                 ref={reportRef}
-                className="rounded-xl border border-neutral-800 bg-neutral-900/30 p-6 md:p-8"
+                className="print-report rounded-xl border border-neutral-800 bg-neutral-900/30 p-6 md:p-8"
                 style={{ background: "#0a0a0a" }}
               >
                 <div className="mb-6 pb-4 border-b border-neutral-800">

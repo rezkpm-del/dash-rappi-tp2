@@ -618,6 +618,10 @@ export default function InsightsDashboard() {
   const hasReport = segments.length > 0;
   const chartCount = segments.filter((s) => s.type === "chart").length;
   const hasCharts = chartCount > 0;
+  const hasMarkdownTables = segments.some(
+    (s) => s.type === "markdown" && /^\s*\|.*\|/m.test(s.content || "")
+  );
+  const hasExportable = hasCharts || hasMarkdownTables;
 
   const samplePrompts = [
     "Analiza las ventas del último trimestre por región",

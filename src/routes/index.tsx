@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import InsightsDashboard from "@/components/InsightsDashboard";
+// @ts-expect-error - JSX module without type declarations
+import InsightsDashboard from "@/components/InsightsDashboard.jsx";
 
 export const Route = createFileRoute("/")({
   component: InsightsDashboard,

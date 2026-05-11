@@ -529,7 +529,88 @@ export default function InsightsDashboard() {
   async function exportPDF() {
     if (!reportRef.current || exporting) return;
     setExporting(true);
+
+    // Clone the report node off-screen and force every color to a
+    // html2canvas-safe HEX value. html2canvas cannot parse oklch(),
+    // which is what our theme tokens compile to.
+    const BG = "#0a0a0a";
+    const FG = "#ffffff";
+    const BORDER = "#262626";
+    const MUTED = "#a3a3a3";
+    const ACCENT = "#3b82f6";
+
+    const original = reportRef.current;
+    const clone = original.cloneNode(true);
+
+    const wrapper = document.createElement("div");
+    wrapper.style.position = "fixed";
+    wrapper.style.left = "-10000px";
+    wrapper.style.top = "0";
+    wrapper.style.width = original.offsetWidth + "px";
+    wrapper.style.background = BG;
+    wrapper.style.color = FG;
+    wrapper.style.padding = "16px";
+    wrapper.appendChild(clone);
+    document.body.appendChild(wrapper);
+
+    const isOklch = (v) => typeof v === "string" && v.includes("oklch");
+    const isTransparent = (v) =>
+      !v ||
+      v === "transparent" ||
+      v === "rgba(0, 0, 0, 0)" ||
+      v === "none";
+
+    const sanitize = (root) => {
+      const all = [root, ...root.querySelectorAll("*")];
+      all.forEach((el) => {
+        if (!(el instanceof HTMLElement) && !(el instanceof SVGElement)) return;
+        const cs = window.getComputedStyle(el);
+
+        // Background
+        const bg = cs.backgroundColor;
+        if (isOklch(bg) || isTransparent(bg)) {
+          // keep transparent for nested elements unless it's oklch
+          if (isOklch(bg)) el.style.backgroundColor = BG;
+        } else {
+          el.style.backgroundColor = bg;
+        }
+
+        // Background image (gradients can also use oklch)
+        const bgImg = cs.backgroundImage;
+        if (isOklch(bgImg)) el.style.backgroundImage = "none";
+
+        // Text color
+        const color = cs.color;
+        if (isOklch(color)) {
+          el.style.color = FG;
+        } else if (color) {
+          el.style.color = color;
+        }
+
+        // Borders
+        ["Top", "Right", "Bottom", "Left"].forEach((side) => {
+          const c = cs[`border${side}Color`];
+          if (isOklch(c)) {
+            el.style[`border${side}Color`] = BORDER;
+          }
+        });
+        const outline = cs.outlineColor;
+        if (isOklch(outline)) el.style.outlineColor = BORDER;
+
+        // Fill / stroke for SVG (charts)
+        const fill = cs.fill;
+        if (isOklch(fill)) el.style.fill = ACCENT;
+        const stroke = cs.stroke;
+        if (isOklch(stroke)) el.style.stroke = MUTED;
+
+        // Box-shadow
+        if (isOklch(cs.boxShadow)) el.style.boxShadow = "none";
+      });
+    };
+
     try {
+      sanitize(clone);
+
       const html2pdf = await loadHtml2Pdf();
       const opt = {
         margin: 12,
@@ -537,16 +618,17 @@ export default function InsightsDashboard() {
         image: { type: "jpeg", quality: 0.97 },
         html2canvas: {
           scale: 2,
-          backgroundColor: "#0a0a0a",
+          backgroundColor: BG,
           useCORS: true,
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["avoid-all", "css", "legacy"] },
       };
-      await html2pdf().set(opt).from(reportRef.current).save();
+      await html2pdf().set(opt).from(clone).save();
     } catch (err) {
       setError("Could not export PDF: " + err.message);
     } finally {
+      if (wrapper.parentNode) wrapper.parentNode.removeChild(wrapper);
       setExporting(false);
     }
   }

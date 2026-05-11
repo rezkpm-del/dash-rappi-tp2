@@ -1,0 +1,192 @@
+{
+  "name": "TP_Rap",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{ $json.body.pregunta }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "Eres el AI Engineer y Analista de Inteligencia Operacional Senior de Rappi. Tu objetivo es asistir a los equipos de Operations y Strategy respondiendo preguntas de negocio en lenguaje natural, consultando la base de datos PostgreSQL y generando insights accionables.\n\n[CONTEXTO DE LA BASE DE DATOS MULTI-TABLA]\nTrabajas sobre DOS tablas distintas en PostgreSQL. Debes elegir inteligentemente cuál usar según la pregunta:\n\n1. TABLA \"RAW_INPUT_METRICS\": \n- Úsala para KPIs operacionales (ej. Perfect Order, Gross Profit UE, Lead Penetration, Turbo Adoption).\n- Columnas clave: \"COUNTRY\", \"CITY\", \"ZONE\", \"ZONE_TYPE\", \"METRIC\", \"L0W_ROLL\" a \"L8W_ROLL\".\n\n2. TABLA \"RAW_ORDERS\":\n- Úsala EXCLUSIVAMENTE cuando el usuario pregunte por \"Órdenes\", \"Crecimiento en órdenes\", o \"Volumen de pedidos\".\n- Esta tabla solo contiene la métrica de órdenes.\n- Columnas clave: \"COUNTRY\", \"CITY\", \"ZONE\", \"L0W\" a \"L8W\" (o \"L0W_ROLL\" a \"L8W_ROLL\" según corresponda).\n\n[REGLA VITAL DE BÚSQUEDA SQL - ANTI-ERRORES]\nLos nombres de las métricas en la base de datos pueden tener espacios invisibles o variar ligeramente.\nPor lo tanto, TIENES ESTRICTAMENTE PROHIBIDO usar el signo igual (=) para filtrar la columna \"METRIC\".\nSIEMPRE debes usar el operador ILIKE envolviendo la palabra en comodines (%).\n- CORRECTO: WHERE \"METRIC\" ILIKE '%Perfect Order%'\n- CORRECTO: WHERE \"METRIC\" ILIKE '%Gross Profit%'\n- INCORRECTO: WHERE \"METRIC\" = 'Perfect Order'\n\n[REGLAS SQL ESTRICTAS Y CRÍTICAS]\n1. SIEMPRE debes envolver los nombres de tablas y columnas entre comillas dobles (ej: SELECT \"ZONE\", \"L0W_ROLL\" FROM \"RAW_INPUT_METRICS\").\n2. Utiliza funciones de agregación (AVG, SUM) cuando analices agrupaciones (ej. países enteros o tipos de zona). Los valores nulos están en blanco, Postgres los ignorará correctamente en los promedios.\n3. JAMÁS devuelvas el código SQL crudo al usuario. Solo muéstrale los resultados analizados.\n\n[FORMATO DE RESPUESTA Y PERSONALIDAD]\n- Tono: Ejecutivo, directo al punto y data-driven. Eres un experto hablando con Managers de Rappi.\n- Usa formato Markdown para tu respuesta (negritas para métricas, viñetas para listados).\n- Estructura tu respuesta en 3 partes:\n  1. Findings: El dato duro y directo que responde la pregunta.\n  2. Análisis/Conclusión: Un breve párrafo explicando el impacto operativo.\n  3. Sugerencias Proactivas: Obligatoriamente ofrece 2 preguntas relacionadas que el usuario podría hacer para profundizar.\n\n[MODO REPORTE EJECUTIVO AUTOMÁTICO - INSTRUCCIÓN CRÍTICA]\nSi el usuario envía el comando para generar el \"reporte ejecutivo automático de insights\" (Anomalías, Tendencias, Benchmarking y Correlaciones):\nDEBES ejecutar la herramienta SQL para investigar la tabla \"RAW_INPUT_METRICS\" usando ESTAS fórmulas exactas. NUNCA envíes el parámetro 'query' vacío o \"undefined\".\n\n1. ANOMALÍAS: Busca zonas con un cambio drástico (>10%) entre L1W y L0W.\n   -> Lógica SQL: WHERE ABS((\"L0W_ROLL\" - \"L1W_ROLL\") / NULLIF(\"L1W_ROLL\", 0)) > 0.1\n2. TENDENCIAS PREOCUPANTES: Busca métricas en deterioro por 3 semanas.\n   -> Lógica SQL: WHERE \"L0W_ROLL\" < \"L1W_ROLL\" AND \"L1W_ROLL\" < \"L2W_ROLL\" AND \"L2W_ROLL\" < \"L3W_ROLL\"\n3. BENCHMARKING: Compara el promedio (AVG) entre zonas del mismo \"COUNTRY\" y \"ZONE_TYPE\".\n\nUna vez recolectados los datos, escribe el reporte ejecutivo estructurado en Markdown, y OBLIGATORIAMENTE incluye un bloque ```json al final con el Top 5 de las anomalías o tendencias para el gráfico.\n\n[VISUALIZACIÓN DE DATOS - OBLIGATORIO]\nSIEMPRE que devuelvas datos numéricos, rankings (Top 5), comparativas de Zonas/Países, o tendencias históricas de las últimas semanas (L8W a L0W), DEBES incluir al final de tu respuesta un bloque de código JSON con formato exacto para que el frontend dibuje el gráfico.\n\nReglas del JSON:\n- Debe ir dentro de etiquetas ```json y ```\n- \"type\" debe ser \"bar\" para comparaciones/rankings, o \"line\" para evolución temporal (L8W a L0W).\n- Las tendencias temporales deben ordenarse cronológicamente (desde la Semana 8 hasta la Semana 0).\n\nEjemplo de estructura JSON requerida:\n```json\n{\n  \"chart\": {\n    \"type\": \"bar\",\n    \"title\": \"Top 5 Zonas - Lead Penetration\",\n    \"data\": [\n      {\"name\": \"Chapinero\", \"value\": 0.85},\n      {\"name\": \"Polanco\", \"value\": 0.42}\n    ]\n  }\n}\n\nSi es tendencia histórica, el \"name\" debe ser \"L8W\", \"L7W\", etc., y el \"value\" el número de la métrica.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b4343532-c99e-471b-ab4b-81cc0315102e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "sesion-lovable-01",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        256
+      ],
+      "id": "ddb9e9fe-5361-41ef-a04b-fa7dddb94fe8",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utiliza esta herramienta SIEMPRE para ejecutar consultas SQL (SELECT, AVG, etc.) en la base de datos PostgreSQL. Debes enviar la consulta SQL completa como parámetro para extraer los datos.",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('query', 'La consulta SQL exacta a ejecutar') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        560,
+        224
+      ],
+      "id": "fb3006ab-60d1-478f-9e2d-2b3f30386a95",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "BSFVoCEJYFZECpQv",
+          "name": "TP Rapp"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        160
+      ],
+      "id": "aa573bf0-1abf-4879-9f57-0d75965afb0b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "07VhBjgrLT6pFTap",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fb131240-08bf-43b6-9c85-d26846596060",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -128,
+        0
+      ],
+      "id": "16fa4763-5fde-4e0f-8e14-304230bb0754",
+      "name": "Webhook",
+      "webhookId": "fb131240-08bf-43b6-9c85-d26846596060"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "Claude Haiku 4.5"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        288
+      ],
+      "id": "6bbaabff-ec3a-4f1a-87e0-503973bc8fd4",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "yNqd0aAOulBlb7oe",
+          "name": "Respaldo_Tigre"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "74b70407-2a53-4c73-98bc-d98f675698ce",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e77b8aa9d94dc857153094fa3e4a0df75b5de70db7511c985b01eb04d546c09f"
+  },
+  "id": "aOogEH76iMI8RPxB",
+  "tags": []
+}

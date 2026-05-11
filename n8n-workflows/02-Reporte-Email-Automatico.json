@@ -1,0 +1,223 @@
+{
+  "name": "My workflow 7",
+  "nodes": [
+    {
+      "parameters": {
+        "sendTo": "rezkpm@gmail.com",
+        "subject": "Reporte ejecutivo estructurado semanal",
+        "message": "={{ $json.data }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        0
+      ],
+      "id": "de373b17-ad8b-4123-afbf-5fedd3d1e917",
+      "name": "Send a message",
+      "webhookId": "0c8041a9-e529-40c1-88e7-186e198cc27d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUaXa6jHBIVCo9HF",
+          "name": "Rezkpm"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -192,
+        -64
+      ],
+      "id": "03bb0566-348f-43ac-a804-b748065dd440",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Analiza toda la base de datos y genera el reporte ejecutivo automático de insights (Anomalías, Tendencias, Benchmarking y Correlaciones) en formato Markdown",
+        "options": {
+          "systemMessage": "Eres el AI Engineer y Analista de Inteligencia Operacional Senior de Rappi. Tu objetivo es asistir a los equipos de Operations y Strategy respondiendo preguntas de negocio en lenguaje natural, consultando la base de datos PostgreSQL y generando insights accionables.\n\n[CONTEXTO DE LA BASE DE DATOS MULTI-TABLA]\nTrabajas sobre DOS tablas distintas en PostgreSQL. Debes elegir inteligentemente cuál usar según la pregunta:\n\n1. TABLA \"RAW_INPUT_METRICS\": \n- Úsala para KPIs operacionales (ej. Perfect Order, Gross Profit UE, Lead Penetration, Turbo Adoption).\n- Columnas clave: \"COUNTRY\", \"CITY\", \"ZONE\", \"ZONE_TYPE\", \"METRIC\", \"L0W_ROLL\" a \"L8W_ROLL\".\n\n2. TABLA \"RAW_ORDERS\":\n- Úsala EXCLUSIVAMENTE cuando el usuario pregunte por \"Órdenes\", \"Crecimiento en órdenes\", o \"Volumen de pedidos\".\n- Esta tabla solo contiene la métrica de órdenes.\n- Columnas clave: \"COUNTRY\", \"CITY\", \"ZONE\", \"L0W\" a \"L8W\" (o \"L0W_ROLL\" a \"L8W_ROLL\" según corresponda).\n\n[REGLA VITAL DE BÚSQUEDA SQL - ANTI-ERRORES]\nLos nombres de las métricas en la base de datos pueden tener espacios invisibles o variar ligeramente.\nPor lo tanto, TIENES ESTRICTAMENTE PROHIBIDO usar el signo igual (=) para filtrar la columna \"METRIC\".\nSIEMPRE debes usar el operador ILIKE envolviendo la palabra en comodines (%).\n- CORRECTO: WHERE \"METRIC\" ILIKE '%Perfect Order%'\n- CORRECTO: WHERE \"METRIC\" ILIKE '%Gross Profit%'\n- INCORRECTO: WHERE \"METRIC\" = 'Perfect Order'\n\n[REGLAS SQL ESTRICTAS Y CRÍTICAS]\n1. SIEMPRE debes envolver los nombres de tablas y columnas entre comillas dobles (ej: SELECT \"ZONE\", \"L0W_ROLL\" FROM \"RAW_INPUT_METRICS\").\n2. Utiliza funciones de agregación (AVG, SUM) cuando analices agrupaciones (ej. países enteros o tipos de zona). Los valores nulos están en blanco, Postgres los ignorará correctamente en los promedios.\n3. JAMÁS devuelvas el código SQL crudo al usuario. Solo muéstrale los resultados analizados.\n\n[FORMATO DE RESPUESTA Y PERSONALIDAD]\n- Tono: Ejecutivo, directo al punto y data-driven. Eres un experto hablando con Managers de Rappi.\n- Usa formato Markdown para tu respuesta (negritas para métricas, viñetas para listados).\n- Estructura tu respuesta en 3 partes:\n  1. Findings: El dato duro y directo que responde la pregunta.\n  2. Análisis/Conclusión: Un breve párrafo explicando el impacto operativo.\n  3. Sugerencias Proactivas: Obligatoriamente ofrece 2 preguntas relacionadas que el usuario podría hacer para profundizar.\n\n[MODO REPORTE EJECUTIVO AUTOMÁTICO - INSTRUCCIÓN CRÍTICA]\nSi el usuario envía el comando para generar el \"reporte ejecutivo automático de insights\" (Anomalías, Tendencias, Benchmarking y Correlaciones):\nDEBES ejecutar la herramienta SQL para investigar la tabla \"RAW_INPUT_METRICS\" usando ESTAS fórmulas exactas. NUNCA envíes el parámetro 'query' vacío o \"undefined\".\n\n1. ANOMALÍAS: Busca zonas con un cambio drástico (>10%) entre L1W y L0W.\n   -> Lógica SQL: WHERE ABS((\"L0W_ROLL\" - \"L1W_ROLL\") / NULLIF(\"L1W_ROLL\", 0)) > 0.1\n2. TENDENCIAS PREOCUPANTES: Busca métricas en deterioro por 3 semanas.\n   -> Lógica SQL: WHERE \"L0W_ROLL\" < \"L1W_ROLL\" AND \"L1W_ROLL\" < \"L2W_ROLL\" AND \"L2W_ROLL\" < \"L3W_ROLL\"\n3. BENCHMARKING: Compara el promedio (AVG) entre zonas del mismo \"COUNTRY\" y \"ZONE_TYPE\".\n\nUna vez recolectados los datos, escribe el reporte ejecutivo estructurado en Markdown, y OBLIGATORIAMENTE incluye un bloque ```json al final con el Top 5 de las anomalías o tendencias para el gráfico.\n\n[VISUALIZACIÓN DE DATOS - OBLIGATORIO]\nSIEMPRE que devuelvas datos numéricos, rankings (Top 5), comparativas de Zonas/Países, o tendencias históricas de las últimas semanas (L8W a L0W), DEBES incluir al final de tu respuesta un bloque de código JSON con formato exacto para que el frontend dibuje el gráfico.\n\nReglas del JSON:\n- Debe ir dentro de etiquetas ```json y ```\n- \"type\" debe ser \"bar\" para comparaciones/rankings, o \"line\" para evolución temporal (L8W a L0W).\n- Las tendencias temporales deben ordenarse cronológicamente (desde la Semana 8 hasta la Semana 0).\n\nEjemplo de estructura JSON requerida:\n```json\n{\n  \"chart\": {\n    \"type\": \"bar\",\n    \"title\": \"Top 5 Zonas - Lead Penetration\",\n    \"data\": [\n      {\"name\": \"Chapinero\", \"value\": 0.85},\n      {\"name\": \"Polanco\", \"value\": 0.42}\n    ]\n  }\n}\n\nSi es tendencia histórica, el \"name\" debe ser \"L8W\", \"L7W\", etc., y el \"value\" el número de la métrica.\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        112,
+        0
+      ],
+      "id": "e5ec4aa6-b2a2-4b6c-bc89-2df01e79d1a1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "sesion-lovable-01",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        272
+      ],
+      "id": "08c95bec-9a24-4afe-b740-6793f51ae2e0",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Utiliza esta herramienta SIEMPRE para ejecutar consultas SQL (SELECT, AVG, etc.) en la base de datos PostgreSQL. Debes enviar la consulta SQL completa como parámetro para extraer los datos.",
+        "operation": "executeQuery",
+        "query": "{{ $fromAI('query', 'La consulta SQL exacta a ejecutar') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        240
+      ],
+      "id": "5c101463-f056-43db-a967-5dcf4da7bbe5",
+      "name": "Execute a SQL query in Postgres",
+      "credentials": {
+        "postgres": {
+          "id": "BSFVoCEJYFZECpQv",
+          "name": "TP Rapp"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        176
+      ],
+      "id": "523f5c1a-2ece-41b8-9013-e17d011645b3",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "07VhBjgrLT6pFTap",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        496,
+        0
+      ],
+      "id": "519cd84d-267e-40d6-84c2-0fd469e978d8",
+      "name": "Markdown"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query in Postgres": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "68d7426b-a633-40e5-8989-625a475d2b13",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e77b8aa9d94dc857153094fa3e4a0df75b5de70db7511c985b01eb04d546c09f"
+  },
+  "id": "5SAuw0jKPESzwRyo",
+  "tags": []
+}

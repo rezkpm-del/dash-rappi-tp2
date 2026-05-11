@@ -242,11 +242,28 @@
     fill: #0a0a0a !important;
   }
 
-  /* Avoid splitting charts/cards across pages */
+  /* Avoid splitting charts/tables/code blocks across pages */
   .print-report .recharts-wrapper,
   .print-report figure,
-  .print-report .chart-block {
-    page-break-inside: avoid;
-    break-inside: avoid;
+  .print-report .chart-block,
+  .print-report table,
+  .print-report thead,
+  .print-report tr,
+  .print-report pre,
+  .print-report blockquote,
+  .print-report img {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-report thead {
+    display: table-header-group;
+  }
+
+  .print-report h1,
+  .print-report h2,
+  .print-report h3 {
+    page-break-after: avoid;
+    break-after: avoid;
   }
 }

@@ -747,7 +747,7 @@ export default function InsightsDashboard() {
                     <ChartBlock key={seg.id || i} chart={seg.chart} />
                   ) : (
                     <div key={i} className="prose-invert">
-                      <ReactMarkdown components={mdComponents}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
                         {seg.content}
                       </ReactMarkdown>
                     </div>

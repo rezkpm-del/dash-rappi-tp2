@@ -227,6 +227,14 @@
   }
 
   /* Recharts: keep original colors and dimensions */
+  .recharts-responsive-container,
+  .recharts-wrapper {
+    height: 350px !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
   .print-report .recharts-wrapper,
   .print-report .recharts-surface,
   .print-report svg {
@@ -260,24 +268,29 @@
   /* Force charts to keep an explicit, printable size.
    * Recharts' ResponsiveContainer collapses on print because it relies on
    * runtime width measurement, so we lock dimensions here. */
+  .print-report .chart-block {
+    overflow: visible !important;
+  }
+
   .print-report .chart-print-wrap {
     display: block !important;
     width: 100% !important;
-    height: 320px !important;
+    height: 350px !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    overflow: visible !important;
   }
 
   .print-report .chart-print-wrap .recharts-responsive-container,
   .print-report .recharts-responsive-container {
     width: 100% !important;
-    height: 320px !important;
-    min-height: 320px !important;
+    height: 350px !important;
+    min-height: 350px !important;
   }
 
   .print-report .recharts-wrapper {
     width: 100% !important;
-    height: 320px !important;
+    height: 350px !important;
   }
 
   .print-report thead {

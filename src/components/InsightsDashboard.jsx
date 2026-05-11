@@ -469,8 +469,8 @@ export default function InsightsDashboard() {
 
   // PDF export uses native window.print() — see @media print in styles.css
 
-  async function handleSubmit() {
-    const q = question.trim();
+  async function handleSubmit(overrideQuestion) {
+    const q = (typeof overrideQuestion === "string" ? overrideQuestion : question).trim();
     if (!q || loading) return;
 
     setLoading(true);

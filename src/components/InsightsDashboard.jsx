@@ -168,8 +168,8 @@ function ChartBlock({ chart }) {
         </h3>
       </div>
 
-      <div className="px-3 pb-4">
-        <ResponsiveContainer width="100%" height={280}>
+      <div className="px-3 pb-4 chart-print-wrap" style={{ width: "100%", height: 280 }}>
+        <ResponsiveContainer width="100%" height="100%">
           {isLine ? (
             <LineChart
               data={data}

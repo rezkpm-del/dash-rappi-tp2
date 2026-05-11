@@ -21,6 +21,8 @@ import {
   Activity,
   Terminal,
   Loader2,
+  Mic,
+  MicOff,
 } from "lucide-react";
 
 const WEBHOOK_URL =

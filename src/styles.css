@@ -142,3 +142,111 @@
     color: var(--color-foreground);
   }
 }
+
+/* ============================================================
+ * Print styles — used by the "Descargar PDF" button via window.print().
+ * Hides everything except the report card, forces a light background
+ * with dark text, and preserves Recharts colors via print-color-adjust.
+ * ============================================================ */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #0a0a0a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Show only the report and its descendants */
+  .print-report,
+  .print-report * {
+    visibility: visible !important;
+  }
+
+  /* Position report at the top of the printed page */
+  .print-report {
+    position: absolute !important;
+    inset: 0 !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 16px !important;
+    background: #ffffff !important;
+    color: #0a0a0a !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Force readable colors on text-bearing elements but skip SVG (charts) */
+  .print-report *:not(svg):not(svg *) {
+    color: #0a0a0a !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border-color: #d4d4d4 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Headings + strong stay bold/dark */
+  .print-report h1,
+  .print-report h2,
+  .print-report h3,
+  .print-report h4,
+  .print-report strong {
+    color: #000000 !important;
+  }
+
+  .print-report a {
+    color: #1d4ed8 !important;
+    text-decoration: underline !important;
+  }
+
+  .print-report code,
+  .print-report pre {
+    background: #f4f4f5 !important;
+    color: #0a0a0a !important;
+    border: 1px solid #e5e5e5 !important;
+  }
+
+  .print-report table,
+  .print-report th,
+  .print-report td {
+    border-color: #d4d4d4 !important;
+  }
+
+  /* Recharts: keep original colors and dimensions */
+  .print-report .recharts-wrapper,
+  .print-report .recharts-surface,
+  .print-report svg {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    overflow: visible !important;
+  }
+
+  .print-report .recharts-cartesian-axis-tick text,
+  .print-report .recharts-legend-item-text,
+  .print-report .recharts-text {
+    fill: #0a0a0a !important;
+  }
+
+  /* Avoid splitting charts/cards across pages */
+  .print-report .recharts-wrapper,
+  .print-report figure,
+  .print-report .chart-block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

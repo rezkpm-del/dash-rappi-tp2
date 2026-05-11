@@ -800,23 +800,50 @@ export default function InsightsDashboard() {
               <div className="text-[10px] font-mono uppercase tracking-wider text-neutral-600">
                 {question.length > 0 ? `${question.length} chars` : "Insight engine"}
               </div>
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !question.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-[12px] font-medium bg-violet-600 hover:bg-violet-500 text-white border border-violet-500/60 disabled:bg-neutral-800 disabled:text-neutral-500 disabled:border-neutral-800 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-900/20"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Generando...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-3.5 w-3.5" />
-                    <span>Generar Reporte</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleListening}
+                  disabled={loading || !speechSupported}
+                  title={
+                    !speechSupported
+                      ? "Tu navegador no soporta dictado por voz"
+                      : isListening
+                      ? "Detener dictado"
+                      : "Dictar por voz"
+                  }
+                  className={`relative inline-flex items-center justify-center h-8 w-8 rounded-md border transition-all ${
+                    isListening
+                      ? "bg-red-600 border-red-500 text-white animate-pulse shadow-lg shadow-red-900/40"
+                      : "bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-700"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                >
+                  {isListening && (
+                    <span className="absolute inset-0 rounded-md ring-2 ring-red-500/60 animate-ping" />
+                  )}
+                  {speechSupported ? (
+                    <Mic className="h-3.5 w-3.5 relative" />
+                  ) : (
+                    <MicOff className="h-3.5 w-3.5 relative" />
+                  )}
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading || !question.trim()}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-[12px] font-medium bg-violet-600 hover:bg-violet-500 text-white border border-violet-500/60 disabled:bg-neutral-800 disabled:text-neutral-500 disabled:border-neutral-800 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-900/20"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Generando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5" />
+                      <span>Generar Reporte</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

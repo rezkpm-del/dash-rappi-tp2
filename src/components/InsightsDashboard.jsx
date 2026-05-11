@@ -466,18 +466,7 @@ export default function InsightsDashboard() {
     el.style.height = Math.min(el.scrollHeight, 200) + "px";
   }, [question]);
 
-  // Lazy-load html2pdf only when needed
-  async function loadHtml2Pdf() {
-    if (window.html2pdf) return window.html2pdf;
-    return new Promise((resolve, reject) => {
-      const script = document.createElement("script");
-      script.src =
-        "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-      script.onload = () => resolve(window.html2pdf);
-      script.onerror = () => reject(new Error("Failed to load html2pdf"));
-      document.head.appendChild(script);
-    });
-  }
+  // PDF export uses native window.print() — see @media print in styles.css
 
   async function handleSubmit() {
     const q = question.trim();

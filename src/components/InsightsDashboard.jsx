@@ -469,8 +469,8 @@ export default function InsightsDashboard() {
 
   // PDF export uses native window.print() — see @media print in styles.css
 
-  async function handleSubmit() {
-    const q = question.trim();
+  async function handleSubmit(overrideQuestion) {
+    const q = (typeof overrideQuestion === "string" ? overrideQuestion : question).trim();
     if (!q || loading) return;
 
     setLoading(true);
@@ -693,10 +693,55 @@ export default function InsightsDashboard() {
               <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-neutral-50 mb-3">
                 Ask your operations.
               </h1>
-              <p className="text-neutral-400 max-w-lg mx-auto mb-10 leading-relaxed">
+              <p className="text-neutral-400 max-w-lg mx-auto mb-8 leading-relaxed">
                 Formula una pregunta en lenguaje natural y obtén reportes
                 ejecutivos con visualizaciones generadas por el agente.
               </p>
+
+              <div className="max-w-3xl mx-auto mb-10">
+                <button
+                  onClick={() =>
+                    handleSubmit(
+                      "Analiza toda la base de datos y genera el reporte ejecutivo automático de insights (Anomalías, Tendencias, Benchmarking y Correlaciones) en formato Markdown"
+                    )
+                  }
+                  disabled={loading}
+                  className="group relative w-full overflow-hidden rounded-xl border border-violet-500/40 bg-gradient-to-br from-violet-600/20 via-violet-500/10 to-cyan-500/10 hover:from-violet-600/30 hover:via-violet-500/20 hover:to-cyan-500/20 hover:border-violet-400/70 transition-all px-6 py-5 text-left disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_40px_-12px_rgba(124,92,255,0.4)]"
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-r from-transparent via-violet-400/5 to-transparent" />
+                  <div className="relative flex items-center gap-4">
+                    <div className="relative flex-shrink-0">
+                      <div className="absolute inset-0 bg-violet-500 blur-lg opacity-50 group-hover:opacity-70 transition-opacity" />
+                      <div className="relative h-12 w-12 rounded-lg bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center border border-violet-300/40">
+                        <Sparkles className="h-6 w-6 text-white" strokeWidth={2.2} />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-violet-300/80 mb-1">
+                        Sistema automático
+                      </div>
+                      <div className="text-base md:text-lg font-semibold text-neutral-50 tracking-tight">
+                        Generar Reporte Ejecutivo Automático
+                      </div>
+                      <div className="text-[12px] text-neutral-400 mt-0.5">
+                        Anomalías · Tendencias · Benchmarking · Correlaciones
+                      </div>
+                    </div>
+                    <div className="hidden sm:flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-violet-300/70 group-hover:text-violet-200 transition-colors">
+                      <span>Ejecutar</span>
+                      <span aria-hidden>→</span>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 max-w-3xl mx-auto mb-6">
+                <div className="h-px flex-1 bg-neutral-800" />
+                <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-neutral-600">
+                  o explora el chat conversacional
+                </span>
+                <div className="h-px flex-1 bg-neutral-800" />
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-3xl mx-auto">
                 {samplePrompts.map((p, i) => (

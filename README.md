@@ -49,3 +49,13 @@ El dashboard en React está configurado para consumir el Webhook de producción 
 3. Asegurarse de actualizar la constante `WEBHOOK_URL` en `InsightsDashboard.jsx` con la URL de la instancia local de n8n si se ejecuta fuera de la nube.
 4. Ejecutar `npm run dev` para iniciar la aplicación.
 5. El site ya esta operativo "https://dash-rappi-tp2.lovable.app/"
+
+## 💳 Costos Estimados de Operación (APIs y Herramientas)
+
+La arquitectura fue diseñada priorizando la eficiencia de costos (ROI) sin sacrificar la disponibilidad ni la escalabilidad del sistema.
+
+* **Orquestación y Backend (n8n Cloud):** €25.00 EUR / mes (Plan Starter). Cubre la ejecución de los webhooks, los agentes de IA y las rutinas automatizadas (cron-jobs) sin necesidad de mantener servidores propios.
+* **Frontend y Hosting (Lovable):** $25.00 USD / mes (Tarifa plana). Cubre el entorno de desarrollo asistido, despliegue continuo y hosting de la interfaz web.
+* **LLM Principal (Google Gemini 2.5 Flash):** ~$0.01 USD a ~$0.02 USD por sesión de 10 preguntas. Se eligió este modelo por su inmejorable relación velocidad/costo, lo que lo hace ideal para escalar la herramienta a cientos de usuarios en SP&A.
+* **LLM de Contingencia (Anthropic Claude):** ~$0.05 USD por sesión de 10 preguntas. Al estar configurado estrictamente como *Fallback Mode* (solo se activa si el modelo principal falla), su impacto en el presupuesto mensual es prácticamente nulo, pero garantiza un 99.9% de uptime operativo.
+* **Base de Datos (Supabase):** Capa gratuita (Free Tier), con capacidad suficiente para la carga actual de procesamiento y almacenamiento de métricas.
